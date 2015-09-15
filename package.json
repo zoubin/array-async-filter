@@ -1,6 +1,6 @@
 {
   "name": "array-async-filter",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "Async filter function for arrays",
   "main": "index.js",
   "scripts": {
