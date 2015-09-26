@@ -123,7 +123,7 @@ Signature: `done(err, results)`
 
 Called when all elements are checked.
 
-If an error thrown when executing `fn`,
+If an error is thrown when executing `fn`,
 or the `next` callback is passed a truthy value as the first argument,
 or the returned promise rejects,
 `done` will be called immediately,
