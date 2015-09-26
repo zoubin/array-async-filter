@@ -1,4 +1,3 @@
-var noop = function () {};
 
 module.exports = function (arr, fn, done) {
   filter(arr, fn, [], 0, done);
@@ -6,23 +5,33 @@ module.exports = function (arr, fn, done) {
 
 function filter(arr, fn, res, i, done) {
   if (arr.length <= i) {
-    return done(res);
+    return done(null, res);
   }
 
   var val = arr[i];
 
-  var r = fn(val, i, arr, next);
+  var r;
+  try {
+    r = fn(val, i, arr, next);
+  } catch (e) {
+    return next(e, res);
+  }
 
   if (r && typeof r.then === 'function') {
     r.then(function (keep) {
-      next(keep);
-    }, noop);
+      next(null, keep);
+    }, function (err) {
+      next(err || new Error('Rejected'));
+    });
   } else if (fn.length < 4) {
     // `sync`
-    next(r);
+    next(null, r);
   }
 
-  function next(keep) {
+  function next(err, keep) {
+    if (err) {
+      return done(err, res);
+    }
     if (keep) {
       res.push(val);
     }

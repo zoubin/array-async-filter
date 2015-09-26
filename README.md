@@ -1,74 +1,131 @@
 # array-async-filter
-Async filter function for arrays.
-
-Supports async callbacks, as well as sync ones.
-Callbacks returning a promise work, too.
+Filter an array using async filter callback.
 
 ## Example
 
+example/filter.js:
+
 ```javascript
-var asyncFilter = require('array-async-filter');
+var asyncFilter = require('..');
+
 asyncFilter(
-  [1, 2, 3, 4],
-  // call the fourth argument when it finishes
+  ['abc', 'bcd', 'cde', 'def'],
   function (val, i, arr, next) {
     process.nextTick(function () {
-      next(val % 2);
+      next(null, val.indexOf('cd') !== -1);
     });
   },
-  function (res) {
-    // `res` === [1, 3]
+  function (err, res) {
+    console.log('async callback:', err, res);
   }
 );
 
 asyncFilter(
-  [1, 2, 3, 4],
-  // return a promise also works
+  ['abc', 'bcd', 'cde', 'def'],
   function (val) {
     return new Promise(function (rs) {
       setTimeout(function() {
-        rs(val % 2);
+        rs(val.indexOf('cd') !== -1);
       }, 10);
     });
   },
-  function (res) {
-    // `res` === [1, 3]
+  function (err, res) {
+    console.log('promise callback:', err, res);
   }
 );
 
 asyncFilter(
-  [1, 2, 3, 4],
-  // do not specify the fourth argument
-  function (val, index, arr) {
-    return val % 2;
+  ['abc', 'bcd', 'cde', 'def'],
+  function (val) {
+    return val.indexOf('cd') !== -1;
   },
-  function (res) {
-    // `res` === [1, 3]
+  function (err, res) {
+    console.log('sync callback:', err, res);
   }
 );
 
 ```
 
+output:
+
+```
+⌘ node example/filter.js
+sync callback: null [ 'bcd', 'cde' ]
+async callback: null [ 'bcd', 'cde' ]
+promise callback: null [ 'bcd', 'cde' ]
+
+```
+
+
 ## asyncFilter(arr, fn, done)
 
-Returns a new array containing elements filtered from `arr`.
+Filter `arr` using `fn`,
+and the results can be accessed by the callback `done`.
 
 ### arr
 
 Type: `Array`
 
-### fn(val, index, arr, next)
+The array to be filtered.
 
-Called with each element in `arr`.
+### fn
 
 Type: `Function`
 
-If `fn` is async, it should call `next(keep)` when it finishes.
-`val` will be added to the final result when `keep` is truthy.
+The filter function.
 
-If a promise is returned from `fn(val, index, arr, next)`,
-then `val` will be added to the final result when the resolved value is truthy.
+It can be synchronous,
+with signature `fn(val, index, arr)`.
+If the returned value is truthy,
+`val` will be kept in the final results.
 
-If `fn` is sync, do not specify the fourth argument in the definition of `fn`.
-`val` will be added to the final result when `fn(val, index, arr)` returns a truthy value.
+`fn` can be made asynchronous if it does one of the following.
+
+#### Accept a callback as the 4th argument
+
+```javascript
+asyncFilter(
+  ['abc', 'bcd', 'cde', 'def'],
+  function (val, i, arr, next) {
+    process.nextTick(function () {
+      next(null, val.indexOf('cd') !== -1);
+    });
+  },
+  function (err, res) {
+    console.log('async callback:', err, res);
+  }
+);
+```
+
+#### Return a promise
+
+```javascript
+asyncFilter(
+  ['abc', 'bcd', 'cde', 'def'],
+  function (val) {
+    return new Promise(function (rs) {
+      setTimeout(function() {
+        rs(val.indexOf('cd') !== -1);
+      }, 10);
+    });
+  },
+  function (err, res) {
+    console.log('promise callback:', err, res);
+  }
+);
+```
+
+### done
+
+Type: `Function`
+
+Signature: `done(err, results)`
+
+Called when all elements are checked.
+
+If an error thrown when executing `fn`,
+or the `next` callback is passed a truthy value as the first argument,
+or the returned promise rejects,
+`done` will be called immediately,
+and filtering finishes.
 
