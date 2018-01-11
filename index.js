@@ -4,7 +4,7 @@ module.exports = function (arr, fn, done) {
 };
 
 function filter(arr, fn, res, i, done) {
-  if (arr.length <= i) {
+  if (!arr || arr.length <= i) {
     return done(null, res);
   }
 
